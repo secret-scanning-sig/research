@@ -10,9 +10,9 @@ We encourage all SIG members to contribute, either by starting new research or b
 
 1. **Create a Branch:** All work must be done in a new branch. Name your branch descriptively.  
    * Example for a new project: `research-average-github-repo-file-size`  
-   * Example for an update: `update-most-common-secret-leak-type-stats`  
+   * Example for an update: `update-most-common-secret-leak-types`  
 2. **Create a Project Folder:** If you are starting a new research topic, create a new folder in the root of the repository. The folder name should be concise and use kebab-case.  
-   * Example: `most-common-secret-leak-type-stats`
+   * Example: `most-common-secret-leak-types`
 3. **Conduct Your Research:** Add all relevant materials to your project folder. This can include:  
    * Notes and raw data.  
    * Scripts used for analysis (e.g. Python, R, shell scripts).  
