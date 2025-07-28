@@ -36,7 +36,7 @@ targets:
 Below this point is just my scratchpad that will be converted into workbook
 notes above.
 
-Rough outline (just a brain dump, this isn't set in stone):
+Rough remaining item list:
 
 - Look for existing tools that do this well for ideas (e.g. Sigma rules, [secret-patterns-db](https://github.com/mazen160/secrets-patterns-db), others?) and check if there's already an [existing standard](https://xkcd.com/927/) for this.
 - Pick a set of initial patterns to try to write (pull from gitleaks, LeakTK, Nosey Parker, secret patterns db, others?).
