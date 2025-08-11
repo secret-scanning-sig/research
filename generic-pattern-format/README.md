@@ -15,7 +15,7 @@ N/A - this project is newly created. We're still fleshing things out.
 ### Translation Target Selection
 
 I took a draft of this doc with a rough outline. I provided it to Gemini 2.5
-pro using the deep research feture to help with finding existing tools and
+pro using the deep research feature to help with finding existing tools and
 translation targets that I may have not considered:
 
 - [Prompt](data/gemini-deep-research/initial-research-prompt.md)
@@ -26,7 +26,7 @@ targets:
 
 - Bash + GNU Coreutils + Grep
 - GitHub Secret Protection
-- GitLeaks
+- Gitleaks
 - Nosey Parker
 - Splunk
 - Sumo Logic
@@ -50,7 +50,7 @@ to be the most restrictive of the PCRE implementations.
 
 Current recommendations on character escapes:
 
-- Escape single and double quotes
+- Escape single quotes, double quotes, and backticks.
 - Escape all metacharacters not being used as metacharacters, even when a
   regex engine wouldn't interpret them as a metacharacter.
 
@@ -63,12 +63,12 @@ use for hunting.
 ### Pattern Format Selection
 
 After selecting the targets and process for picking a regex formats, I began
-looking at existing wide spread detection formats like Sigma and Yara
+looking at existing wide spread detection formats like Sigma and YARA
 for inspiration for the format.
 
 I decided to start with a format that is specific, typed, and declarative to
 make it easier to translate. I also chose TOML since it is compact, simple, and
-makes escaping more complicated strings easier with tripple single quotes.
+makes escaping more complicated strings easier with triple single quotes.
 
 ```toml
 # Field Constraints:
@@ -140,7 +140,7 @@ makes escaping more complicated strings easier with tripple single quotes.
 
 ### Initial Rule Selection
 
-I selected a few rules for Gitleaks, Nosey Parker, and Yara that:
+I selected a few rules for Gitleaks, Nosey Parker, and YARA that:
 
 - Leverage most of the tool's features or have complex logic
 - Are large and potentially unwieldy to write
@@ -170,7 +170,7 @@ Rough remaining item list:
     this point or test it another way. If we do want to start ping me
     (bplaxco), I have some ideas that might help us get started.
 
-[^3]: Some things to think about: just pattern target, extra indicators (both postive and negative), conditions (and how to translate those), etc
+[^3]: Some things to think about: just pattern target, extra indicators (both positive and negative), conditions (and how to translate those), etc
 
 ## [Draft] Results & Conclusion
 
