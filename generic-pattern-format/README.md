@@ -70,6 +70,12 @@ I decided to start with a format that is specific, typed, and declarative to
 make it easier to translate. I also chose TOML since it is compact, simple, and
 makes escaping more complicated strings easier with triple single quotes.
 
+Also for IDs I used:
+
+```sh
+echo "SSSIG$(openssl rand 10 | basenc --base32)"
+```
+
 ```toml
 # Field Constraints:
 # - fields are required unless otherwise noted
@@ -130,8 +136,8 @@ makes escaping more complicated strings easier with triple single quotes.
   # - entropy_{gt,lt}: check the entropy against some value
   # - matches: the matches aginst this pattern
   [rules.condition]
-    target.prefix_matches = '''(?:\A|\W)'''
-    target.suffix_matches = '''(?:\W|\z)'''
+    target.prefix_matches = '''\A|\W'''
+    target.suffix_matches = '''\W|\z'''
     target.entropy_gt = 3.0
     path.not_matches_in = [
         '''(?i)(?:\A|\/)tutorials\/aws\/access-keys\.md\z''',
