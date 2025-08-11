@@ -87,12 +87,12 @@ makes escaping more complicated strings easier with tripple single quotes.
 
   # (Optional) Meta data that can be added to the rule to pass along in tools
   # that can support it
-  [meta]
+  [rules.meta]
     foo = 'bar'
     service = 'aws'
     tags = ['experimental']
 
-  [target]
+  [rules.target]
     # Used by analyzers to identify the kind of thing it's working with,
     # grouping in reporting, etc. This allows multiple rules to exist to
     # identify things where the format might be more flexible than a single
@@ -129,7 +129,7 @@ makes escaping more complicated strings easier with tripple single quotes.
   # - suffix_matches: a pattern that must match starting directly after the subject
   # - entropy_{gt,lt}: check the entropy against some value
   # - matches: the matches aginst this pattern
-  [condition]
+  [rules.condition]
     target.prefix_matches = '''(?:\A|\W)'''
     target.suffix_matches = '''(?:\W|\z)'''
     target.entropy_gt = 3.0
@@ -138,6 +138,16 @@ makes escaping more complicated strings easier with tripple single quotes.
     ]
 ```
 
+### Initial Rule Selection
+
+I selected a few rules for Gitleaks, Nosey Parker, and Yara that:
+
+- Leverage most of the tool's features or have complex logic
+- Are large and potentially unwieldy to write
+
+They can be found under `data/rules/{gitleaks.toml,noseyparker.yaml,yara.yar}`.
+
+
 ### Scratchpad
 
 Below this point is just my scratchpad that will be converted into workbook
@@ -145,8 +155,6 @@ notes above.
 
 Rough remaining item list:
 
-- Pick a set of initial patterns to try to write (pull from gitleaks, LeakTK, Nosey Parker, secret patterns db, others?).
-- Collect the rules in this repo under something like `data/patterns/<provider>/<rule-file>` and include a README.md to cite where we pull the data from and add licenses if needed
 - Start work on pulling out the common bits from those rules in a way way that easily translates[^1].
 - Start scripting and testing the ability to use the detections effectively[^2].
 - How to provide better detections for things that can support it vs basic detections for things that might only offer basic options[^3].
