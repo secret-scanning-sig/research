@@ -1,0 +1,54 @@
+[[rules]]
+  id = 'SSSIGDPG4G2UGSQPG4SCE'
+
+  [rules.meta]
+    tags = ['aws', 'secret']
+    confidence = 'medium'
+    report = true
+    references = [
+      '''https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_identifiers.html#identifiers-unique-ids''',
+      '''https://medium.com/@TalBeerySec/a-short-note-on-aws-key-id-f88cc4317489''',
+    ]
+
+  [rules.meta.examples]
+    positive = [
+      'AKIAABCDEFGHIJKLMNOP',
+      'AKIADEADBEEFDEADBEEF',
+    ]
+    negative = [
+      'AKIAABCDEFGHIJKLMNO',
+      'AKIAABCDEFGHIjklmnop',
+      '======================',
+      '//////////////////////',
+      '++++++++++++++++++++++',
+    ]
+
+  [rules.target]
+    kind = 'aws_access_key_id'
+    name = 'AWS Acess Key ID'
+    description = '''An AWS Access Key ID is a unique identifier for an AWS user or program making requests to AWS services. It functions like a username, identifying the sender of a request. Access Key IDs are used in conjunction with a corresponding Secret Access Key to programmatically access AWS services via the AWS Command Line Interface (CLI), AWS SDKs, or direct API calls.'''
+    pattern = '''AKIA[A-Z2-7]{16}'''
+
+  [[rules.filters]]
+    kind = 'require'
+    target_prefix_patterns = ['''\A|\W''']
+    target_suffix_patterns = ['''\W|\z''']
+    target_min_entropy = 3.0
+
+  [[rules.filters]]
+    kind = 'exclude'
+    target_strings = [
+      'example',
+      'abcd',
+      '123
+    ]
+
+  [[rules.filters]]
+    kind = 'exclude'
+    target_prefix_patterns = ['''(?i)(?:sample|example).{0,128}''']
+
+  [[rules.filters]]
+    kind = 'exclude'
+    context_patterns = [
+      '''X-Amz-Signature|WC1BbXotU2lnbmF0dXJl|gtQW16LVNpZ25hdHVyZ|YLUFtei1TaWduYXR1cm'''
+    ]

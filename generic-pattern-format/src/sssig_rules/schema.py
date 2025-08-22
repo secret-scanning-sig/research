@@ -75,26 +75,9 @@ class Target(BaseModel):
     pattern: Pattern
 
 
-class FilterMode(StrEnum):
+class FilterKind(StrEnum):
     REQUIRE = auto()
     EXCLUDE = auto()
-
-
-class TargetMatcher(BaseModel):
-    max_entropy: OptionalPositiveFloat = None
-    min_entropy: OptionalPositiveFloat = None
-    prefix: Pattern | None = None
-    suffix: Pattern | None = None
-    strings: list[str] | None = None
-
-
-class ContextMatcher(BaseModel):
-    patterns: list[Pattern] | None = None
-    strings: list[str] | None = None
-
-
-class PathMatcher(BaseModel):
-    paths: list[Pattern] | None = None
 
 
 class HttpMatcher(BaseModel):
@@ -107,16 +90,23 @@ class HttpMatcher(BaseModel):
 
 
 class Filter(BaseModel):
-    mode: FilterMode
+    kind: FilterKind
 
     # These are AND'd, for OR, define multiple filters
-    condition: list[
-        Union[
-            ContextMatcher,
-            TargetMatcher,
-            PathMatcher,
-        ]
-    ]
+
+    # Target features
+    target_max_entropy: OptionalPositiveFloat = None
+    target_min_entropy: OptionalPositiveFloat = None
+    target_prefix_patterns: Pattern | None = None
+    target_suffix_patterns: Pattern | None = None
+    target_strings: list[str] | None = None
+
+    # Context features
+    context_patterns: list[Pattern] | None = None
+    context_strings: list[str] | None = None
+
+    # Path features
+    paths: list[Pattern] | None = None
 
 
 class AnalyzerKind(StrEnum):

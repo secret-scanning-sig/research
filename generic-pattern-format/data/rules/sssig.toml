@@ -1,44 +1,43 @@
 [[rules]]
   id = 'SSSIGTVE2THEZF64SBFFM'
-  references = [
-    'https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_identifiers.html#identifiers-unique-ids',
-    'https://medium.com/@TalBeerySec/a-short-note-on-aws-key-id-f88cc4317489',
-    'https://github.com/awslabs/git-secrets/blob/master/git-secrets',
-    'https://docs.aws.amazon.com/IAM/latest/UserGuide/best-practices.html',
-    'https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_access-keys.html',
-    'https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_identifiers.html',
-    'https://docs.aws.amazon.com/accounts/latest/reference/credentials-access-keys-best-practices.html',
-  ]
 
   [rules.meta]
     tags = ['identifier', 'api']
-    examples = [
-      'A3T0ABCDEFGHIJKLMNOP',
-      'AKIADEADBEEFDEADBEEF',
+    references = [
+      'https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_identifiers.html#identifiers-unique-ids',
+      'https://medium.com/@TalBeerySec/a-short-note-on-aws-key-id-f88cc4317489',
+      'https://github.com/awslabs/git-secrets/blob/master/git-secrets',
+      'https://docs.aws.amazon.com/IAM/latest/UserGuide/best-practices.html',
+      'https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_access-keys.html',
+      'https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_identifiers.html',
+      'https://docs.aws.amazon.com/accounts/latest/reference/credentials-access-keys-best-practices.html',
     ]
-    negative_examples = [
-      'A3T0ABCDEFGHIJKLMNO',
-      'A3T0ABCDEFGHIjklmnop',
-      '======================',
-      '//////////////////////',
-      '++++++++++++++++++++++',
-    ]
+    examples = {
+      positive = [
+        'A3T0ABCDEFGHIJKLMNOP',
+        'AKIADEADBEEFDEADBEEF',
+      ],
+      negative = [
+        'A3T0ABCDEFGHIJKLMNO',
+        'A3T0ABCDEFGHIjklmnop',
+        '======================',
+        '//////////////////////',
+        '++++++++++++++++++++++',
+      ],
+    }
 
   [rules.target]
     kind = 'AwsIamUniqueId'
     name = 'AWS IAM Unqiue ID'
     pattern = '''(?:A3T[A-Z0-9]|AKIA|ASIA|ABIA|ACCA)[A-Z2-7]{16}'''
-    description = '''
-    When IAM creates a user, user group, role, policy, instance profile, or
-    server certificate, it assigns a unique ID to each resource.
-    '''
+    description = '''When IAM creates a user, user group, role, policy, instance profile, or server certificate, it assigns a unique ID to each resource.'''
 
-  [rules.condition]
-    target.prefix_matches = '''\A|\W'''
-    target.suffix_matches = '''\W|\z'''
-    target.entropy_gt = 3.0
-    target.not_matches = '''(?i)example|abcd|1234'''
-    context.not_matches_in = [
+  [[rules.conditions]]
+    prefix_matches.target = '''\A|\W'''
+    suffix_matches.target = '''\W|\z'''
+    entropy_gt.target= 3.0
+    not_matches.target= '''(?i)example|abcd|1234'''
+    not_matches_in.context = [
       '''X-Amz-Signature|WC1BbXotU2lnbmF0dXJl|gtQW16LVNpZ25hdHVyZ|YLUFtei1TaWduYXR1cm''',
       '''(?i)(?:sample|example).{0,128}(?:A3T[A-Z0-9]|AKIA|ASIA|ABIA|ACCA)[A-Z2-7]{16}(?:\W|\z)''',
     ]
