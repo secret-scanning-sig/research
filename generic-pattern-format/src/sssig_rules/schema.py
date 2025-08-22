@@ -1,53 +1,79 @@
+import re
+import enum
+
 from enum import StrEnum
-from enum import auto
 from pathlib import Path
 from re import Pattern
 from typing import Annotated
 from typing import Union
 
+from pydantic import AfterValidator
 from pydantic import BaseModel
-from pydantic import HttpUrl
 from pydantic import Field
+from pydantic import HttpUrl
+
+from sssig_rules import hscheck
+
+
+def is_valid_hs_pattern(raw_pattern: str) -> str:
+    """
+    Make sure the pattern is a valid hyperscan pattern
+    """
+    err = hscheck.validate_pattern(raw_pattern)
+    if err:
+        raise ValueError(err)
+
+    return raw_pattern
 
 
 RuleId = Annotated[str, Field(pattern="^SSSIG[A-Z2-7]{16}$")]
 OptionalPositiveInt = Annotated[int | None, Field(ge=0)]
 OptionalPositiveFloat = Annotated[float | None, Field(ge=0)]
 VariableName = Annotated[str, Field(pattern="^[a-z](?:[a-z0-9_]*[a-z0-9])?$")]
+Pattern = Annotated[str, AfterValidator(is_valid_hs_pattern)]
 
 
 class Confidence(StrEnum):
-    LOW = auto()
-    MEDIUM = auto()
-    HIGH = auto()
+    LOW = enum.auto()
+    MEDIUM = enum.auto()
+    HIGH = enum.auto()
 
 
 class Syntax(StrEnum):
-    HTML = auto()
-    JSON = auto()
-    XML = auto()
+    HTML = enum.auto()
+    JSON = enum.auto()
+    XML = enum.auto()
 
 
 class TargetKind(StrEnum):
     # The default kind if unset
-    UNKNOWN = auto()
+    UNKNOWN = enum.auto()
 
     # Not an exhaustive list, just an example
-    AWS_ACCESS_KEY_ID = auto()
-    AWS_SECRET_ACCESS_KEY = auto()
-    HOSTNAME = auto()
-    URL = auto()
-    ANTHROPIC_API_KEY = auto()
-    DOCKER_SWARM_JOIN_TOKEN = auto()
-    GITHUB_APP_INSTALLATION_ACCESS_TOKEN = auto()
-    GOOGLE_API_KEY = auto()
-    TERRAFORM_API_TOKEN = auto()
-    HEROKU_PLATFORM_API_OAUTH3_TOKEN = auto()
-    HF_USER_ACCESS_TOKEN = auto()
-    NOTION_API_TOKEN = auto()
-    NPM_ACCESS_TOKEN = auto()
-    OPENAI_API_KEY = auto()
-    PERPLEXITY_API_KEY = auto()
+    ANTHROPIC_API_KEY = enum.auto()
+    ATLASSIAN_API_TOKEN = enum.auto()
+    AWS_ACCESS_KEY_ID = enum.auto()
+    AWS_S3_BUCKET = enum.auto()
+    AWS_SECRET_ACCESS_KEY = enum.auto()
+    BASIC_AUTH_PASSWORD = enum.auto()
+    BASIC_AUTH_USERNAME = enum.auto()
+    CLOUDFLARE_ORIGIN_CA_KEY = enum.auto()
+    DOCKER_SWARM_JOIN_TOKEN = enum.auto()
+    GCP_SERVICE_ACCOUNT_INFO = enum.auto()
+    GITHUB_APP_INSTALLATION_ACCESS_TOKEN = enum.auto()
+    GOOGLE_API_KEY = enum.auto()
+    HEROKU_PLATFORM_API_OAUTH3_TOKEN = enum.auto()
+    HF_USER_ACCESS_TOKEN = enum.auto()
+    HOSTNAME = enum.auto()
+    NOTION_API_TOKEN = enum.auto()
+    NPM_ACCESS_TOKEN = enum.auto()
+    OPENAI_API_KEY = enum.auto()
+    PERPLEXITY_API_KEY = enum.auto()
+    SLACK_USER_OAUTH_TOKEN = enum.auto()
+    TERRAFORM_API_TOKEN = enum.auto()
+    URL = enum.auto()
+    WIREGUARD_PRESHARED_KEY = enum.auto()
+    WIREGUARD_PRIVATE_KEY = enum.auto()
 
 
 class Examples(BaseModel):
@@ -68,16 +94,21 @@ class Meta(BaseModel):
     tags: list[str] | None = None
 
 
-class Target(BaseModel):
+class RuleMeta(Meta):
     kind: TargetKind = TargetKind.UNKNOWN
     name: str
-    description: str
+    description: str | None = None
+
+
+class Target(BaseModel):
+    prefix_pattern: Pattern | None = None
     pattern: Pattern
+    suffix_pattern: Pattern | None = None
 
 
 class FilterKind(StrEnum):
-    REQUIRE = auto()
-    EXCLUDE = auto()
+    REQUIRE = enum.auto()
+    EXCLUDE = enum.auto()
 
 
 class HttpMatcher(BaseModel):
@@ -91,26 +122,32 @@ class HttpMatcher(BaseModel):
 
 class Filter(BaseModel):
     kind: FilterKind
-
     # These are AND'd, for OR, define multiple filters
 
     # Target features
-    target_max_entropy: OptionalPositiveFloat = None
     target_min_entropy: OptionalPositiveFloat = None
-    target_prefix_patterns: Pattern | None = None
-    target_suffix_patterns: Pattern | None = None
+    target_patterns: list[Pattern] | None = None
     target_strings: list[str] | None = None
 
-    # Context features
+    # Match features
+    match_patterns: list[Pattern] | None = None
+    match_strings: list[str] | None = None
+
+    # Context features (note: context may vary by target)
     context_patterns: list[Pattern] | None = None
     context_strings: list[str] | None = None
 
     # Path features
-    paths: list[Pattern] | None = None
+    path_patterns: list[Pattern] | None = None
+    path_strings: list[str] | None = None
 
 
 class AnalyzerKind(StrEnum):
-    HTTP = auto()
+    HTTP = enum.auto()
+
+
+class AnalyzerMeta(Meta):
+    kind: AnalyzerKind
 
 
 class AnalyzerHttpAction(BaseModel):
@@ -122,12 +159,11 @@ class AnalyzerHttpAction(BaseModel):
 
 
 class Analyzer(BaseModel):
-    kind: AnalyzerKind
-    meta: Meta
-    action: Union[AnalyzerHttpAction,]
+    meta: AnalyzerMeta
+    action: AnalyzerHttpAction
 
     # these are AND'd
-    condition: list[Union[HttpMatcher,]]
+    condition: list[HttpMatcher]
 
 
 class Dependancy(BaseModel):
@@ -139,7 +175,7 @@ class Dependancy(BaseModel):
 
 class Rule(BaseModel):
     id: RuleId
-    meta: Meta
+    meta: RuleMeta
     dependencies: list[Dependancy] | None = None
     target: Target
     filters: list[Filter] | None = None

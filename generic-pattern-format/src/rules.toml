@@ -2,6 +2,9 @@
   id = 'SSSIGDPG4G2UGSQPG4SCE'
 
   [rules.meta]
+    kind = 'aws_access_key_id'
+    name = 'AWS Acess Key ID'
+    description = '''An AWS Access Key ID is a unique identifier for an AWS user or program making requests to AWS services. It functions like a username, identifying the sender of a request. Access Key IDs are used in conjunction with a corresponding Secret Access Key to programmatically access AWS services via the AWS Command Line Interface (CLI), AWS SDKs, or direct API calls.'''
     tags = ['aws', 'secret']
     confidence = 'medium'
     report = true
@@ -24,15 +27,12 @@
     ]
 
   [rules.target]
-    kind = 'aws_access_key_id'
-    name = 'AWS Acess Key ID'
-    description = '''An AWS Access Key ID is a unique identifier for an AWS user or program making requests to AWS services. It functions like a username, identifying the sender of a request. Access Key IDs are used in conjunction with a corresponding Secret Access Key to programmatically access AWS services via the AWS Command Line Interface (CLI), AWS SDKs, or direct API calls.'''
+    prefix_pattern = '''\A|\W'''
     pattern = '''AKIA[A-Z2-7]{16}'''
+    suffix_pattern = '''\W|\z'''
 
   [[rules.filters]]
     kind = 'require'
-    target_prefix_patterns = ['''\A|\W''']
-    target_suffix_patterns = ['''\W|\z''']
     target_min_entropy = 3.0
 
   [[rules.filters]]
@@ -40,15 +40,288 @@
     target_strings = [
       'example',
       'abcd',
-      '123
+      '123',
     ]
 
   [[rules.filters]]
     kind = 'exclude'
-    target_prefix_patterns = ['''(?i)(?:sample|example).{0,128}''']
+    match_patterns = [
+      '''(?i)^(?:sample|example).{0,128}AKIA[A-Z2-7]{16}'''
+    ]
 
   [[rules.filters]]
     kind = 'exclude'
     context_patterns = [
       '''X-Amz-Signature|WC1BbXotU2lnbmF0dXJl|gtQW16LVNpZ25hdHVyZ|YLUFtei1TaWduYXR1cm'''
+    ]
+
+[[rules]]
+  id = 'SSSIGTVE2THEZF64SBFFM'
+
+  [rules.meta]
+    kind = 'atlassian_api_token'
+    name = 'Atlassian API token'
+    description = '''You can use an API token to authenticate a script with an Atlassian cloud app. You generate the token from your Atlassian account, then copy and paste it into a script.'''
+    references = [
+      'https://github.com/gitleaks/gitleaks/blob/master/config/gitleaks.toml',
+      'https://support.atlassian.com/atlassian-account/docs/manage-api-tokens-for-your-atlassian-account/',
+    ]
+
+  [rules.target]
+    prefix_pattern = '''(?i)[\w.-]{0,50}?(?:(?-i:ATLASSIAN|[Aa]tlassian)|(?-i:CONFLUENCE|[Cc]onfluence)|(?-i:JIRA|[Jj]ira))(?:[ \t\w.-]{0,20})[\s'"]{0,3}(?:=|>|:{1,3}=|\|\||:|=>|\?=|,)[\x60'"\s=]{0,5}'''
+    pattern = '[a-z0-9]{20}[a-f0-9]{4}'
+    suffix_pattern = '''\W|\z'''
+
+  [[rules.filters]]
+    kind = 'require'
+    target_min_entropy = 3.5
+
+[[rules]]
+  id = 'SSSIG7NHZTOAWKKLZIHAJ'
+
+  [rules.meta]
+    kind = 'atlassian_api_token'
+    name = 'Atlassian API token'
+    description = '''You can use an API token to authenticate a script with an Atlassian cloud app. You generate the token from your Atlassian account, then copy and paste it into a script.'''
+    references = [
+      'https://github.com/gitleaks/gitleaks/blob/master/config/gitleaks.toml',
+      'https://support.atlassian.com/atlassian-account/docs/manage-api-tokens-for-your-atlassian-account/',
+    ]
+
+  [rules.target]
+    prefix_pattern = '''\A|\W'''
+    pattern = 'ATATT3[A-Za-z0-9_\-=]{186}'
+    suffix_pattern = '''\W|\z'''
+
+  [[rules.filters]]
+    kind = 'require'
+    target_min_entropy = 3.5
+
+
+[[rules]]
+  id = 'SSSIGTVE2THEZF64SBFFM'
+
+  [rules.meta]
+    kind = 'cloudflare_origin_ca_key'
+    name = 'Cloudflare Origin CA Key'
+
+  [rules.target]
+    prefix_pattern = '''\A|\W'''
+    pattern = '''v1\.0-[a-f0-9]{24}-[a-f0-9]{146}'''
+    suffix_pattern = '''[\x60\'\"\s;]|\\[nr]|$'''
+
+  [[rules.filters]]
+    kind = 'require'
+    target_min_entropy = 2
+
+[[rules]]
+  id = 'SSSIGHP6SVITIDKEB5QEE'
+
+  [rules.meta]
+    kind = 'basic_auth_password'
+    name = 'Basic Auth Password'
+    tags = ['curl', 'cli']
+
+  [rules.target]
+    prefix_pattern = '''(?:\A|\W)curl\s[\s\S]{0,128}(?:--user|-u)[\s=]+[^:]{0,128}:[\\\'\"]?'''
+    pattern = '''[^\'\"\s\`]{3,128}'''
+
+  [[rules.filters]]
+    kind = 'require'
+    target_min_entropy = 2
+
+  [[rules.filters]]
+    kind = 'exclude'
+    target_strings = [
+      'change',
+      'passw',
+      'pwd',
+      'test',
+      'token',
+    ]
+
+  [[rules.filters]]
+    kind = 'exclude'
+    target_patterns = [
+      '[\.\*\+]{3,}',
+    ]
+
+[[rules]]
+  # This only partially implements generic-api-key from gitleaks. Apart from
+  # leaving things out for breavity there's also an allowlist item it
+  # leaves out but I might argue it's worth leaving out for the sake of
+  # portability across tools.
+  id = 'SSSIGQJMUXKZWYMLMQWP5'
+
+  [rules.meta]
+    kind = 'unknown'
+    name = 'Generic Secret'
+
+  [rules.target]
+    prefix_pattern = '''(?i)[\w.-]{0,50}?(?:access|auth|(?-i:[Aa]pi|API)|credential|creds|key|passw(?:or)?d|secret|token)(?:[ \t\w.-]{0,20})[\s'"]{0,3}(?:=|>|:{1,3}=|\|\||:|=>|\?=|,)[\x60'"\s=]{0,5}'''
+    pattern = '''(?i)[\w\.\-=]{10,150}|[a-z0-9][a-z0-9+/]{11,}={0,3}'''
+    suffix_pattern = '''[\x60'"\s;]|\\[nr]|\z'''
+
+  [[rules.filters]]
+    kind = 'require'
+    target_min_entropy = 3.5
+
+  [[rules.filters]]
+    kind = 'exclude'
+    target_patterns = [
+      '''\A[a-zA-Z_.-]+\Z''',
+    ]
+  [[rules.filters]]
+    kind = 'exclude'
+    context_patterns = [
+      '''--mount=type=secret,''',
+      '''import[\x20\t]+{[\x20\t\w,]+}[\x20\t]+from[\x20\t]+[\'\"][^\'\"]+[\'\"]''',
+      '''(?i)(?:access(?:ibility|or)|access[_.-]?id|random[_.-]?access|api[_.-]?(?:id|name|version)|rapid|capital|[a-z0-9-]*?api[a-z0-9-]*?:jar:|author|X-MS-Exchange-Organization-Auth|Authentication-Results|(?:credentials?[_.-]?id|withCredentials)|(?:bucket|foreign|hot|idx|natural|primary|pub(?:lic)?|schema|sequence)[_.-]?key|(?:turkey)|key[_.-]?(?:alias|board|code|frame|id|length|mesh|name|pair|press(?:ed)?|ring|selector|signature|size|stone|storetype|word|up|down|left|right)|key[_.-]?vault[_.-]?(?:id|name)|keyVaultToStoreSecrets|key(?:store|tab)[_.-]?(?:file|path)|issuerkeyhash|(?-i:[DdMm]onkey|[DM]ONKEY)|keying|(?:secret)[_.-]?(?:length|name|size)|UserSecretsId|(?:csrf)[_.-]?token|(?:io\.jsonwebtoken[ \t]?:[ \t]?[\w-]+)|(?:api|credentials|token)[_.-]?(?:endpoint|ur[il])|public[_.-]?token|(?:key|token)[_.-]?file|(?-i:(?:[A-Z_]+=\n[A-Z_]+=|[a-z_]+=\n[a-z_]+=)(?:\n|\z))|(?-i:(?:[A-Z.]+=\n[A-Z.]+=|[a-z.]+=\n[a-z.]+=)(?:\n|\z)))''',
+    ]
+
+  [[rules.filters]]
+    kind = 'exclude'
+    target_strings = [
+      # Not pulling the full ist in here, but just grabbing a few as an example
+      'account',
+      'bosh',
+      'bot-',
+      'bot.',
+      'bot_',
+      'bower',
+      'box-',
+      'box.',
+      'box_',
+      'boxen',
+      'bracket',
+      'branch',
+      'bridge',
+      'commander',
+      'commit',
+      'passw',
+      'change',
+      'token',
+      '1234',
+      'computer',
+      'config',
+      'deamon',
+    ]
+
+[[rules]]
+  id = 'SSSIGPYKJZOEVVGDMWCWD'
+
+  [rules.meta]
+    kind = 'wireguard_private_key'
+    name = 'WireGuard Private Key'
+    tags = ['fuzzy', 'secret']
+    references = [
+      'https://www.wireguard.com/quickstart/',
+      'https://manpages.debian.org/testing/wireguard-tools/wg.8.en.html',
+      'https://gist.github.com/lanceliao/5d2977f417f34dda0e3d63ac7e217fd6',
+    ]
+
+  [rules.meta.examaples]
+    positive = [
+      '''
+      [Interface]
+      Address = 10.200.200.3/32
+      PrivateKey = AsaFot43bfs1fEWjvtty+rGcjh3rP1H6sug1l3u19ix=
+      DNS = 8.8.8.8
+      '''
+    ]
+
+  [rules.target]
+    prefix_pattern = '''PrivateKey\s*=\s*'''
+    pattern = '''[A-Za-z0-9+/]{43}='''
+
+[[rules]]
+  id = 'SSSIGXMTJQ5OTBD37ES7Q'
+
+  [rules.meta]
+    kind = 'wireguard_preshared_key'
+    name = 'WireGuard Preshared Key'
+    tags = ['fuzzy', 'secret']
+    references = [
+      'https://www.wireguard.com/quickstart/',
+      'https://manpages.debian.org/testing/wireguard-tools/wg.8.en.html',
+      'https://gist.github.com/lanceliao/5d2977f417f34dda0e3d63ac7e217fd6',
+    ]
+
+  [rules.meta.examples]
+    positive = [
+      '''
+      [Peer]
+      PublicKey = [Server's public key]
+      PresharedKey = uRsfsZ2Ts1rach4Zv3hhwcx6wa5fuIo2u3w7sa+7j81=
+      AllowedIPs = 0.0.0.0/0, ::/0
+      Endpoint = [Server Addr:Server Port]
+      '''
+    ]
+
+  [rules.target]
+    prefix_pattern = '''PresharedKey\s*=\s*'''
+    pattern = '''[A-Za-z0-9+/]{43}='''
+
+
+[[rules]]
+  id = 'SSSIGPHWSTKPXP2TMEKHU'
+
+  [rules.meta]
+    kind = 'aws_s3_bucket'
+    name = 'AWS S3 Bucket'
+    tags = ['api', 'identifier']
+    references = [
+      'https://docs.aws.amazon.com/general/latest/gr/rande.html',
+    ]
+
+  [rules.meta.examples]
+    positive = [
+      'example-bucket.s3.amazonaws.com',
+      'http://bucket.s3-us-east-2.amazonaws.com',
+      'http%2F%2Fsome-bucket.s3.amazonaws.com',
+    ]
+    negative = [
+      '.s3.amazonaws.com',
+      's3.amazonaws.com',
+    ]
+
+  [rules.target]
+    prefix_pattern = '''(?:\A|[\s\/\"\']|%2F)'''
+    pattern = '''[\w-]+'''
+    suffix_pattern = '''(?i)\.s3(?:-(?:af|ap|ca|eu|me|sa|us(?:-gov)?)-(?:central|(?:north|south)(?:east|west)?)-[1-3])?\.amazonaws\.com(?:\W|\z)'''
+
+[[rules]]
+  id = 'SSSIGWGS6KSUVNYJ2BIB7'
+
+  [rules.meta]
+    kind = 'slack_user_oauth_token'
+    name = 'Slack User OAuth Token'
+    description = '''A Slack user OAuth token (which typically begins with xoxp-) is an access token obtained through the Slack OAuth flow that represents the permissions granted to a Slack app by a specific user within a workspace. This token allows the app to perform actions on behalf of that user, such as sending messages, accessing user-specific information, or interacting with channels and conversations, based on the scopes granted during the OAuth process.'''
+    references = [
+      'https://api.slack.com/concepts/token-types',
+    ]
+
+  [rules.target]
+    prefix_pattern = '\A|\W'
+    pattern = '''xoxp-[0-9]{4,24}-[0-9]{4,24}-[0-9]{4,24}-[0-9a-fA-F]{32}'''
+    suffix_pattern = '\W|\z'
+
+[[rules]]
+  id = 'SSSIGJGLD46T4E3CFTSJQ'
+
+  [rules.meta]
+    kind = 'gcp_service_account_info'
+    name = 'Google Cloud Platform Service Account Info'
+    references = [
+      'https://cloud.google.com/iam/docs/service-account-overview',
+      'https://www.ibm.com/docs/en/dsm?topic=firewall-configuring-google-cloud-platform-communicate-qradar',
+    ]
+
+  [rules.target]
+    pattern = '''\{[^\}]{0,256}(?:\"(?:client_x509_cert_url|private_key|client_email)\"\s*:\s*\"[^\"]+"[^\}]{0,256}){3}\}'''
+
+  [[rules.filters]]
+    kind = 'exclude'
+    path_patterns = [
+      '''(?i)\.(md|adoc|rst|html)\z''',
     ]

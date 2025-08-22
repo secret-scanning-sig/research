@@ -1,43 +1,38 @@
 #!/usr/bin/env python3
+import logging
 import sys
 import tomllib
 
 from argparse import ArgumentParser
 from argparse import Namespace
-from enum import StrEnum
 from enum import auto
 from pathlib import Path
 
-from schema import Rule
+from sssig_rules.schema import Rule
+from sssig_rules import targets
+from sssig_rules.targets import TargetKind
 
-
-class Format(StrEnum):
-    GITLEAKS = auto()
-    SPLUNK = auto()
-    NOSEYPARKER = auto()
-    KINGFISHER = auto()
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(message)s",
+)
 
 
 def main(args: list[str]) -> int:
-    try:
-        _translate(_parse_args(args))
-    except Exception as e:
-        print("ERROR:", e, file=sys.stderr)
-        return 1
-
-    return 0
+    print(_translate(_parse_args(args)))
 
 
 def _translate(opts):
-    fmt = opts.format
+    fmt = opts.target
     rules = _load_rules(opts.rulespath)
-    return globals()["_translate_{fmt}"](rules)
+    return getattr(targets, fmt).translate(rules)
 
 
 def _load_rules(rulespath: Path) -> list[Rule]:
-    with rulespath.open(encoding="utf-8") as rulesfile:
+    with rulespath.open("rb") as rulesfile:
         return [
-            Rule.parse_obj(rule_data) for rule_data in tomlib.load(rulesfile)["rules"]
+            Rule.model_validate(rule_data)
+            for rule_data in tomllib.load(rulesfile)["rules"]
         ]
 
 
@@ -51,16 +46,19 @@ def _parse_args(args: list[str]) -> Namespace:
         type=Path,
     )
     parser.add_argument(
-        "--format",
-        type=Format,
-        choices=list(Format),
+        "-t",
+        "--target",
+        type=TargetKind,
+        choices=list(TargetKind),
         required=True,
     )
+
     opts = parser.parse_args(args)
     if not opts.rulespath.is_file():
         raise ValueError(f"provided rulespath does not exist")
+
     return opts
 
 
 if __name__ == "__main__":
-    sys.exit(main(sys.argv[1:]))
+    main(sys.argv[1:])

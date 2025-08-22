@@ -76,73 +76,10 @@ Also for IDs I used:
 echo "SSSIG$(openssl rand 10 | basenc --base32)"
 ```
 
-```toml
-# Field Constraints:
-# - fields are required unless otherwise noted
-# - id fields must be surrogate keys
-# - id/kind fields must match ^[a-zA-Z][a-zA-Z0-9]$
+I defined the schema using models to make it easier to parse, test and
+validate.
 
-[[rules]]
-  id = 'SSSIGLHE4MQP2WYFTYDYC'
-
-  # (Optional) List of sources that the rule was derived from
-  references = [
-    'https://medium.com/@TalBeerySec/a-short-note-on-aws-key-id-f88cc4317489',
-    'https://github.com/awslabs/git-secrets/blob/master/git-secrets',
-  ]
-
-  # (Optional) Meta data that can be added to the rule to pass along in tools
-  # that can support it
-  [rules.meta]
-    foo = 'bar'
-    service = 'aws'
-    tags = ['experimental']
-
-  [rules.target]
-    # Used by analyzers to identify the kind of thing it's working with,
-    # grouping in reporting, etc. This allows multiple rules to exist to
-    # identify things where the format might be more flexible than a single
-    # rule can account for
-    kind = 'AWSAccessKeyID'
-
-    # A human friendly display name for reports and notifications
-    name = 'AWS Access Key ID'
-
-    # (Optional) Describe what the target is to someone who might not know
-    description = '''
-    Access keys are long-term credentials for an IAM user or the AWS account
-    root user. You can use access keys to sign programmatic requests to the
-    AWS CLI or AWS API (directly or using the AWS SDK).
-    '''
-
-    # Regex for matching only the target itself and is not responsible for
-    # any extra validation. Depending on the translation target and conditions
-    # additional regex may be appended or prepended for filtering.
-    pattern = '''AKIA[A-Z2-7]{16}'''
-
-  # (Optional) A set of constraints that must be met for the rule to be satisfied
-  # The format is: {subject}.{operator} = {value}
-  #
-  # subjects:
-  # - target: the match for the target defined above
-  # - context: at least the lines the match is on but is scanner dependant
-  # - path: the path in filepath format of the resource containing the match
-  #
-  # operators:
-  # - not_{operator}: all of the operators can be negated
-  # - {operator}_in: apply the operator to a list where at least one matches
-  # - prefix_matches: a pattern that must match up to the subject
-  # - suffix_matches: a pattern that must match starting directly after the subject
-  # - entropy_{gt,lt}: check the entropy against some value
-  # - matches: the matches aginst this pattern
-  [rules.condition]
-    target.prefix_matches = '''\A|\W'''
-    target.suffix_matches = '''\W|\z'''
-    target.entropy_gt = 3.0
-    path.not_matches_in = [
-        '''(?i)(?:\A|\/)tutorials\/aws\/access-keys\.md\z''',
-    ]
-```
+You can view it here: [src/sssig\_rules/schema.py](src/sssig_rules/schema.py)
 
 ### Initial Rule Selection
 
@@ -152,7 +89,6 @@ I selected a few rules for Gitleaks, Nosey Parker, and YARA that:
 - Are large and potentially unwieldy to write
 
 They can be found under `data/rules/{gitleaks.toml,noseyparker.yaml,yara.yar}`.
-
 
 ### Scratchpad
 
