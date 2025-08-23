@@ -1,4 +1,4 @@
-// SSSIGJGLD46T4E3CFTSJQ
+// S3IGJGLD46T4E3CFTSJQ
 rule CredentialCloudGCPServiceAccount : Credential Cloud GCP {
     meta:
         name        = "GCP Service Account JSON"
@@ -27,7 +27,7 @@ rule CredentialCloudGCPServiceAccount : Credential Cloud GCP {
         )
 }
 
-// SSSIGWGS6KSUVNYJ2BIB7
+// S3IGWGS6KSUVNYJ2BIB7
 rule CredentialSaaSSlackUserToken : Credential SaaS Slack {
     meta:
         name        = "Slack User OAuth token"

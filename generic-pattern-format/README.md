@@ -73,7 +73,7 @@ makes escaping more complicated strings easier with triple single quotes.
 Also for IDs I used:
 
 ```sh
-echo "SSSIG$(openssl rand 10 | basenc --base32)"
+echo "S3IG$(openssl rand 10 | basenc --base32)"
 ```
 
 I defined the schema using models to make it easier to parse, test and

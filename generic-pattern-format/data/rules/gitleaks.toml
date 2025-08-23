@@ -1,4 +1,4 @@
-# SSSIGTVE2THEZF64SBFFM
+# S3IGTVE2THEZF64SBFFM
 [[rules]]
   id = "aws-access-token"
   description = "Identified a pattern that may indicate AWS credentials, risking unauthorized cloud resource access and data breaches on AWS platforms."
@@ -17,7 +17,7 @@
         '''.+EXAMPLE$''',
     ]
 
-# SSSIG7NHZTOAWKKLZIHAJ, SSSIGTVE2THEZF64SBFFM
+# S3IG7NHZTOAWKKLZIHAJ, S3IGTVE2THEZF64SBFFM
 [[rules]]
   id = "atlassian-api-token"
   description = "Detected an Atlassian API token, posing a threat to project management and collaboration tool security and data confidentiality."
@@ -30,7 +30,7 @@
       "atatt3",
   ]
 
-# SSSIGTVE2THEZF64SBFFM
+# S3IGTVE2THEZF64SBFFM
 [[rules]]
   id = "cloudflare-origin-ca-key"
   description = "Detected a Cloudflare Origin CA Key, potentially compromising cloud application deployments and operational security."
@@ -41,7 +41,7 @@
       "v1.0-",
   ]
 
-# SSSIGHP6SVITIDKEB5QEE
+# S3IGHP6SVITIDKEB5QEE
 [[rules]]
   id = "curl-auth-user"
   description = "Discovered a potential basic authorization token provided in a curl command, which could compromise the curl accessed resource."
@@ -59,7 +59,7 @@
         '''['"]?\$?{{[^}]+}}['"]?:['"]?\$?{{[^}]+}}['"]?''',
     ]
 
-# SSSIGQJMUXKZWYMLMQWP5 (partial implementation)
+# S3IGQJMUXKZWYMLMQWP5 (partial implementation)
 
 [[rules]]
   id = "generic-api-key"

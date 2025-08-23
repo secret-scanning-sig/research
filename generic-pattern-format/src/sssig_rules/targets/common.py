@@ -1,6 +1,8 @@
 import logging
 import re
 
+import yaml
+
 from sssig_rules.schema import Pattern
 from sssig_rules.schema import Rule
 
@@ -53,3 +55,21 @@ def _or_patterns(patterns: list[Pattern]) -> Pattern | None:
             return patterns[0]
         case _:
             return Pattern("|".join(f"(?:{p})" for p in patterns))
+
+
+def _yaml_str_presenter(dumper, data):
+    """
+    Display multi-line values using |-
+    """
+    if "\n" in data:
+        return dumper.represent_scalar("tag:yaml.org,2002:str", data, style="|")
+
+    return dumper.represent_scalar("tag:yaml.org,2002:str", data)
+
+
+yaml.add_representer(str, _yaml_str_presenter)
+
+
+class _YamlDumper(yaml.Dumper):
+    def increase_indent(self, flow=False, indentless=False):
+        return super(_YamlDumper, self).increase_indent(flow, False)

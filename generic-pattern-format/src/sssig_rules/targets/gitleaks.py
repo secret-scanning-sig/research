@@ -9,7 +9,6 @@ from typing import Literal
 import tomlkit
 
 from pydantic import BaseModel
-from pydantic import Field
 
 from sssig_rules.schema import OptionalPositiveFloat
 from sssig_rules.schema import OptionalPositiveInt
@@ -259,4 +258,4 @@ def _config(rules: [Rule]) -> _Config:
 
 
 def translate(rules: list[Rule]) -> str:
-    return tomlkit.dumps(_config(rules).model_dump(exclude_none=True))
+    return tomlkit.dumps(_config(rules).model_dump(mode="json", exclude_none=True))

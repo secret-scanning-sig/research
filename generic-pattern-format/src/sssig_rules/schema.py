@@ -27,7 +27,7 @@ def is_valid_hs_pattern(raw_pattern: str) -> str:
     return raw_pattern
 
 
-RuleId = Annotated[str, Field(pattern="^SSSIG[A-Z2-7]{16}$")]
+RuleId = Annotated[str, Field(pattern="^S3IG[A-Z2-7]{16}$")]
 OptionalPositiveInt = Annotated[int | None, Field(ge=0)]
 OptionalPositiveFloat = Annotated[float | None, Field(ge=0)]
 VariableName = Annotated[str, Field(pattern="^[a-z](?:[a-z0-9_]*[a-z0-9])?$")]
