@@ -6,6 +6,7 @@ from pathlib import Path
 from re import Pattern
 from typing import Annotated
 from typing import Union
+from typing import Literal
 
 from pydantic import AfterValidator
 from pydantic import BaseModel
@@ -120,14 +121,31 @@ class HttpMatcher(BaseModel):
     body_syntax: Syntax | None = None
 
 
-class Filter(BaseModel):
-    kind: FilterKind
-    # These are AND'd, for OR, define multiple filters
+class BaseFilter(BaseModel):
+    """
+    Filters options supported for all kinds
+    """
 
     # Target features
-    target_min_entropy: OptionalPositiveFloat = None
-    target_patterns: list[Pattern] | None = None
     target_strings: list[str] | None = None
+
+    # Path features
+    path_patterns: list[Pattern] | None = None
+    path_strings: list[str] | None = None
+
+    # Context features (note: context may vary by target)
+    context_strings: list[str] | None = None
+
+
+class ExcludeFilter(BaseFilter):
+    """
+    Filters options supported only exclude
+    """
+
+    kind: Literal[FilterKind.EXCLUDE]
+
+    # Target features
+    target_patterns: list[Pattern] | None = None
 
     # Match features
     match_patterns: list[Pattern] | None = None
@@ -135,11 +153,20 @@ class Filter(BaseModel):
 
     # Context features (note: context may vary by target)
     context_patterns: list[Pattern] | None = None
-    context_strings: list[str] | None = None
 
-    # Path features
-    path_patterns: list[Pattern] | None = None
-    path_strings: list[str] | None = None
+
+class RequireFilter(BaseFilter):
+    """
+    Filters options supported only require
+    """
+
+    kind: Literal[FilterKind.REQUIRE]
+
+    # Target features
+    target_min_entropy: OptionalPositiveFloat = None
+
+
+Filter = Annotated[Union[ExcludeFilter, RequireFilter], Field(discriminator="kind")]
 
 
 class AnalyzerKind(StrEnum):

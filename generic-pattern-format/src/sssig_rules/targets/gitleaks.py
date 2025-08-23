@@ -38,6 +38,7 @@ class _AllowlistCondition(StrEnum):
 
 class _Allowlist(BaseModel):
     condition: _AllowlistCondition
+    # TODO fix serialization_alias not working
     regex_target: Annotated[
         _RegexTarget | None, Field(serialization_alias="regexTarget")
     ] = None
