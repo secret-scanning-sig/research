@@ -38,10 +38,7 @@ class _AllowlistCondition(StrEnum):
 
 class _Allowlist(BaseModel):
     condition: _AllowlistCondition
-    # TODO fix serialization_alias not working
-    regex_target: Annotated[
-        _RegexTarget | None, Field(serialization_alias="regexTarget")
-    ] = None
+    regexTarget: _RegexTarget | None = None
     paths: list[Pattern] | None = None
     regexes: list[Pattern] | None = None
     stopwords: list[str] | None = None
@@ -49,12 +46,8 @@ class _Allowlist(BaseModel):
 
 class _Required(BaseModel):
     id: str
-    within_lines: Annotated[
-        int | None, Field(ge=0, serialization_alias="withinLines")
-    ] = None
-    within_columns: Annotated[
-        int | None, Field(ge=0, serialization_alias="withinColumns")
-    ] = None
+    withinLines: OptionalPositiveInt = None
+    withinColumns: OptionalPositiveInt = None
 
 
 class _Rule(BaseModel):
@@ -65,7 +58,7 @@ class _Rule(BaseModel):
     entropy: OptionalPositiveFloat = None
     keywords: list[str] | None = None
     tags: list[str] | None = None
-    skip_report: Annotated[bool, Field(serialization_alias="skipReport")]
+    skipReport: bool | None = None
     allowlists: list[_Allowlist] | None = None
     required: list[_Required] | None = None
 
@@ -150,8 +143,8 @@ def _required(rule: Rule) -> list[_Required] | None:
     return [
         _Required(
             id=d.rule_id,
-            within_lines=d.within_lines,
-            within_columns=d.within_columns,
+            withinLines=d.within_lines,
+            withinColumns=d.within_columns,
         )
         for d in rule.dependencies
     ]
@@ -233,7 +226,7 @@ def _allowlists(rule: Rule) -> list[_Allowlist] | None:
                 stopwords=f.target_strings,
                 paths=_path_patterns(f),
                 regexes=patterns,
-                regex_target=regex_target,
+                regexTarget=regex_target,
             )
         )
 
@@ -257,7 +250,7 @@ def _rule(rule: Rule) -> _Rule:
         tags=_tags(rule),
         required=_required(rule),
         allowlists=_allowlists(rule),
-        skip_report=_skip_report(rule),
+        skipReport=_skip_report(rule),
     )
 
 
