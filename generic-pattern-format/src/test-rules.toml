@@ -325,3 +325,70 @@ Endpoint = [Server Addr:Server Port]
     path_patterns = [
       '''(?i)\.(md|adoc|rst|html)\z''',
     ]
+
+[[rules]]
+  id = 'S3IGTAZC4EEQJF2U67DZ'
+
+  [rules.meta]
+    kind = 'github_personal_access_token'
+    name = 'GitHub Personal Access Token'
+
+  [rules.target]
+    pattern = '''\bghp_[0-9A-Za-z]{36}\b'''
+
+  [[rules.analyzers]]
+    meta.kind = 'http'
+
+    [rules.analyzers.action]
+      url = 'https://api.github.com/user'
+      method = 'post'
+
+      [rules.analyzers.headers]
+        accept = 'application/vnd.github.v3+json'
+        authorization = 'Bearer {{ target }}'
+
+    [[rules.analyzers.condition]]
+        body_syntax = 'json'
+        body_pattern = '''\"login\"\s*:\s*\"[^\"]+"'''
+        body_strings = ['"node_id"', '"email"', '"company"']
+        statuses = [200]
+
+    [[rules.analyzers.condition]]
+        headers = {'server'=['github.com']}
+
+    [[rules.analyzers.condition]]
+        headers = {'x-github-api-version-selected' = ['2022-11-28']}
+
+[[rules]]
+  id = 'S3IGTAZC4EEQJF2U67DE'
+
+  [rules.meta]
+    kind = 'unknown'
+    name = 'Status negation example'
+
+  [[rules.dependencies]]
+    rule_id = 'S3IGTAZC4EEQJF2U67DZ'
+    varname = 'github_pat'
+    within_lines = 100
+    within_columns = 100
+
+  [rules.target]
+    pattern = '''\b\w+\b'''
+
+  [[rules.analyzers]]
+    [rules.analyzers.meta]
+      kind = 'http'
+      report = true
+
+    [rules.analyzers.action]
+      url = 'https://example.com/api/check'
+      method = 'post'
+
+      [rules.analyzers.action.headers]
+        authorization = 'Bearer {{ target }}'
+
+    [[rules.analyzers.condition]]
+      # For kingfisher this should automatically be converted into a
+      # negative matcher because it would be fewer statuses to check to do so
+      # the code is smart enough to figure that out
+      statuses = [[100,400], [402,599]]

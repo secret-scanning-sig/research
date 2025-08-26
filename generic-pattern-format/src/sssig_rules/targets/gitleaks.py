@@ -2,23 +2,23 @@ import enum
 import logging
 
 from enum import StrEnum
-from typing import Annotated
-from typing import Any
-from typing import Literal
 
 import tomlkit
 
 from pydantic import BaseModel
 
+from sssig_rules.schema import ExcludeFilter
+from sssig_rules.schema import Filter
+from sssig_rules.schema import FilterKind
 from sssig_rules.schema import OptionalPositiveFloat
 from sssig_rules.schema import OptionalPositiveInt
 from sssig_rules.schema import Pattern
 from sssig_rules.schema import Rule
-from sssig_rules.schema import FilterKind
-from sssig_rules.schema import Filter
 
-from .common import _or_patterns
 from .common import _match_pattern
+from .common import _min_entropy as _entropy
+from .common import _or_patterns
+from .common import _required_filters
 from .common import _strings_to_pattern
 
 logger = logging.getLogger(__name__)
@@ -66,10 +66,6 @@ class _Config(BaseModel):
     rules: list[_Rule]
 
 
-def _required_filters(rule: Rule) -> list[Filter]:
-    return [f for f in (rule.filters or []) if f.kind == FilterKind.REQUIRE]
-
-
 def _keywords(rule: Rule) -> list[str] | None:
     if not rule.filters:
         return None
@@ -88,19 +84,6 @@ def _keywords(rule: Rule) -> list[str] | None:
     return keywords or None
 
 
-def _entropy(rule: Rule) -> float | None:
-    req_filters = _required_filters(rule)
-    if not req_filters:
-        return None
-
-    entropy = 0
-    for f in req_filters:
-        if f.target_min_entropy and f.target_min_entropy > entropy:
-            entropy = f.target_min_entropy
-
-    return entropy or None
-
-
 def _regex(rule: Rule) -> Pattern:
     return _match_pattern(rule)
 
@@ -111,14 +94,20 @@ def _path_patterns(f: Filter) -> list[Pattern] | None:
     if f.path_patterns:
         patterns.extend(f.path_patterns)
 
-    if f.path_strings:
-        patterns.extend(_strings_to_pattern(f.path_strings))
+    strings_pattern = _strings_to_pattern(f.path_strings)
+    if strings_pattern is not None:
+        patterns.append(strings_pattern)
 
     return patterns or None
 
 
 def _path(rule: Rule) -> Pattern | None:
-    return _or_patterns(list(map(_path_patterns, _required_filters(rule))))
+    pattern_lists: list[list[Pattern]] = []
+    for f in _required_filters(rule):
+        patterns = _path_patterns(f)
+        if patterns is not None:
+            pattern_lists.append(patterns)
+    return _or_patterns([p for ps in pattern_lists for p in ps])
 
 
 def _tags(rule: Rule) -> list[str]:
@@ -162,7 +151,7 @@ def _skip_report(rule: Rule) -> bool:
 
 
 def _allowlist_regexes(
-    rule: Rule, f: Filter
+    rule: Rule, f: ExcludeFilter
 ) -> tuple[_RegexTarget | None, list[Pattern] | None]:
     # Gitleaks can't handle multiple allowlist pattern scopes AND'd together
     # so this tries to do the best it can to set the target correctly when
@@ -176,8 +165,9 @@ def _allowlist_regexes(
         if f.context_patterns:
             patterns.extend(f.context_patterns)
 
-        if f.context_strings:
-            patterns.append(_strings_to_pattern(f.context_strings))
+        strings_pattern = _strings_to_pattern(f.context_strings)
+        if strings_pattern is not None:
+            patterns.append(strings_pattern)
 
     if f.match_patterns or f.match_strings:
         if regex_target:
@@ -190,8 +180,9 @@ def _allowlist_regexes(
         if f.match_patterns:
             patterns.extend(f.match_patterns)
 
-        if f.match_strings:
-            patterns.append(_strings_to_pattern(f.match_strings))
+        strings_pattern = _strings_to_pattern(f.match_strings)
+        if strings_pattern is not None:
+            patterns.append(strings_pattern)
 
     if f.target_patterns:
         if regex_target:
@@ -211,7 +202,9 @@ def _allowlist_regexes(
 
 
 def _allowlists(rule: Rule) -> list[_Allowlist] | None:
-    exc_filters = [f for f in (rule.filters or []) if f.kind == FilterKind.EXCLUDE]
+    exc_filters: list[ExcludeFilter] = [
+        f for f in (rule.filters or []) if f.kind == FilterKind.EXCLUDE
+    ]
 
     if not exc_filters:
         return None
@@ -253,7 +246,7 @@ def _rule(rule: Rule) -> _Rule:
     )
 
 
-def _config(rules: [Rule]) -> _Config:
+def _config(rules: list[Rule]) -> _Config:
     return _Config(rules=list(map(_rule, rules)))
 
 

@@ -1,19 +1,30 @@
-import re
 import enum
 
 from enum import StrEnum
-from pathlib import Path
-from re import Pattern
 from typing import Annotated
 from typing import Union
 from typing import Literal
 
 from pydantic import AfterValidator
 from pydantic import BaseModel
+from pydantic import BeforeValidator
 from pydantic import Field
 from pydantic import HttpUrl
 
-from sssig_rules import hscheck
+from sssig_rules import hscheck  # type: ignore
+
+
+def ensure_valid_range(value: int | list[int]) -> list[int]:
+    if isinstance(value, int):
+        return [value, value]
+
+    if len(value) != 2:
+        raise ValueError(f"{value} must contain two values")
+
+    if value[0] >= value[1]:
+        raise ValueError(f"the first number in {value} must be smaller")
+
+    return value
 
 
 def is_valid_hs_pattern(raw_pattern: str) -> str:
@@ -61,7 +72,7 @@ class TargetKind(StrEnum):
     CLOUDFLARE_ORIGIN_CA_KEY = enum.auto()
     DOCKER_SWARM_JOIN_TOKEN = enum.auto()
     GCP_SERVICE_ACCOUNT_INFO = enum.auto()
-    GITHUB_APP_INSTALLATION_ACCESS_TOKEN = enum.auto()
+    GITHUB_PERSONAL_ACCESS_TOKEN = enum.auto()
     GOOGLE_API_KEY = enum.auto()
     HEROKU_PLATFORM_API_OAUTH3_TOKEN = enum.auto()
     HF_USER_ACCESS_TOKEN = enum.auto()
@@ -112,8 +123,11 @@ class FilterKind(StrEnum):
     EXCLUDE = enum.auto()
 
 
+StatusRange = Annotated[list[int], BeforeValidator(ensure_valid_range)]
+
+
 class HttpMatcher(BaseModel):
-    statuses: list[int] | None = None
+    statuses: list[StatusRange] | None = None
     headers: dict[str, list[str]] | None = None
 
     body_strings: list[str] | None = None
@@ -175,6 +189,7 @@ class AnalyzerKind(StrEnum):
 
 class AnalyzerMeta(Meta):
     kind: AnalyzerKind
+    report: bool = False
 
 
 class AnalyzerHttpAction(BaseModel):

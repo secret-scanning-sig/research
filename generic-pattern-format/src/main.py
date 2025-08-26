@@ -1,11 +1,10 @@
-#!/usr/bin/env python3
+#!.venv/bin/python3
 import logging
 import sys
 import tomllib
 
 from argparse import ArgumentParser
 from argparse import Namespace
-from enum import auto
 from pathlib import Path
 
 from sssig_rules.schema import Rule
@@ -20,6 +19,7 @@ logging.basicConfig(
 
 def main(args: list[str]) -> int:
     print(_translate(_parse_args(args)))
+    return 0
 
 
 def _translate(opts):
@@ -55,7 +55,7 @@ def _parse_args(args: list[str]) -> Namespace:
 
     opts = parser.parse_args(args)
     if not opts.rulespath.is_file():
-        raise ValueError(f"provided rulespath does not exist")
+        raise ValueError("provided rulespath does not exist")
 
     return opts
 

@@ -1,6 +1,5 @@
 import logging
 
-import yaml
 
 from pydantic import BaseModel
 from pydantic import HttpUrl
@@ -8,8 +7,8 @@ from pydantic import HttpUrl
 from sssig_rules.schema import Rule
 from sssig_rules.schema import Pattern
 
+from .common import _dump_yaml
 from .common import _match_pattern
-from .common import _YamlDumper
 
 logger = logging.getLogger(__name__)
 
@@ -79,10 +78,4 @@ def _config(rules: list[Rule]) -> _Config:
 
 
 def translate(rules: list[Rule]) -> str:
-    return yaml.dump(
-        _config(rules).model_dump(mode="json", exclude_none=True),
-        Dumper=_YamlDumper,
-        sort_keys=False,
-        default_flow_style=False,
-        width=float("inf"),
-    )
+    return _dump_yaml(_config(rules))

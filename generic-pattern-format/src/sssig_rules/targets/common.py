@@ -5,6 +5,10 @@ import yaml
 
 from sssig_rules.schema import Pattern
 from sssig_rules.schema import Rule
+from sssig_rules.schema import FilterKind
+from sssig_rules.schema import RequireFilter
+
+from pydantic import BaseModel
 
 logger = logging.getLogger(__name__)
 
@@ -35,7 +39,10 @@ def _pattern_str(
         return str(pattern)
 
 
-def _strings_to_pattern(strings: list[str]) -> Pattern | None:
+def _strings_to_pattern(strings: None | list[str]) -> Pattern | None:
+    if strings is None:
+        return None
+
     match len(strings):
         case 0:
             return None
@@ -57,6 +64,23 @@ def _or_patterns(patterns: list[Pattern]) -> Pattern | None:
             return Pattern("|".join(f"(?:{p})" for p in patterns))
 
 
+def _required_filters(rule: Rule) -> list[RequireFilter]:
+    return [f for f in (rule.filters or []) if f.kind == FilterKind.REQUIRE]
+
+
+def _min_entropy(rule: Rule) -> float | None:
+    req_filters = _required_filters(rule)
+    if not req_filters:
+        return None
+
+    entropy = 0.0
+    for f in req_filters:
+        if f.target_min_entropy and f.target_min_entropy > entropy:
+            entropy = f.target_min_entropy
+
+    return entropy or None
+
+
 def _yaml_str_presenter(dumper, data):
     """
     Display multi-line values using |-
@@ -73,3 +97,13 @@ yaml.add_representer(str, _yaml_str_presenter)
 class _YamlDumper(yaml.Dumper):
     def increase_indent(self, flow=False, indentless=False):
         return super(_YamlDumper, self).increase_indent(flow, False)
+
+
+def _dump_yaml(model: BaseModel) -> str:
+    return yaml.dump(
+        model.model_dump(mode="json", exclude_none=True),
+        Dumper=_YamlDumper,
+        sort_keys=False,
+        default_flow_style=False,
+        width=float("inf"),
+    )
