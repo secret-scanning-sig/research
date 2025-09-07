@@ -1,12 +1,14 @@
 import logging
 import re
 
+import tomlkit
 import yaml
 
-from sssig_rules.schema import Pattern
-from sssig_rules.schema import Rule
+from sssig_rules.schema import ExcludeFilter
 from sssig_rules.schema import FilterKind
+from sssig_rules.schema import Pattern
 from sssig_rules.schema import RequireFilter
+from sssig_rules.schema import Rule
 
 from pydantic import BaseModel
 
@@ -68,6 +70,10 @@ def _required_filters(rule: Rule) -> list[RequireFilter]:
     return [f for f in (rule.filters or []) if f.kind == FilterKind.REQUIRE]
 
 
+def _excluded_filters(rule: Rule) -> list[ExcludeFilter]:
+    return [f for f in (rule.filters or []) if f.kind == FilterKind.EXCLUDE]
+
+
 def _min_entropy(rule: Rule) -> float | None:
     req_filters = _required_filters(rule)
     if not req_filters:
@@ -107,3 +113,7 @@ def _dump_yaml(model: BaseModel) -> str:
         default_flow_style=False,
         width=float("inf"),
     )
+
+
+def _dump_toml(model: BaseModel) -> str:
+    return tomlkit.dumps(model.model_dump(mode="json", exclude_none=True))

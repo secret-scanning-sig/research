@@ -3,18 +3,17 @@ import logging
 
 from enum import StrEnum
 
-import tomlkit
-
 from pydantic import BaseModel
 
 from sssig_rules.schema import ExcludeFilter
 from sssig_rules.schema import Filter
-from sssig_rules.schema import FilterKind
 from sssig_rules.schema import OptionalPositiveFloat
 from sssig_rules.schema import OptionalPositiveInt
 from sssig_rules.schema import Pattern
 from sssig_rules.schema import Rule
 
+from .common import _dump_toml
+from .common import _excluded_filters
 from .common import _match_pattern
 from .common import _min_entropy as _entropy
 from .common import _or_patterns
@@ -67,14 +66,12 @@ class _Config(BaseModel):
 
 
 def _keywords(rule: Rule) -> list[str] | None:
-    if not rule.filters:
+    req_filters = _required_filters(rule)
+    if not req_filters:
         return None
 
     keywords = []
-    for f in rule.filters:
-        if f.kind != FilterKind.REQUIRE:
-            continue
-
+    for f in req_filters:
         if f.context_strings:
             keywords.extend(f.context_strings)
 
@@ -202,10 +199,7 @@ def _allowlist_regexes(
 
 
 def _allowlists(rule: Rule) -> list[_Allowlist] | None:
-    exc_filters: list[ExcludeFilter] = [
-        f for f in (rule.filters or []) if f.kind == FilterKind.EXCLUDE
-    ]
-
+    exc_filters = _excluded_filters(rule)
     if not exc_filters:
         return None
 
@@ -251,4 +245,4 @@ def _config(rules: list[Rule]) -> _Config:
 
 
 def translate(rules: list[Rule]) -> str:
-    return tomlkit.dumps(_config(rules).model_dump(mode="json", exclude_none=True))
+    return _dump_toml(_config(rules))
