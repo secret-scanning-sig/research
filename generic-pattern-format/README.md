@@ -29,7 +29,6 @@ targets:
 - Gitleaks
 - Nosey Parker
 - Splunk
-- Sumo Logic
 - TruffleHog
 - YARA
 
@@ -90,30 +89,24 @@ I selected a few rules for Gitleaks, Nosey Parker, and YARA that:
 
 They can be found under `data/rules/{gitleaks.toml,noseyparker.yaml,yara.yar}`.
 
-### Scratchpad
+The converted format can be found at `data/rules/sssig.toml`
 
-Below this point is just my scratchpad that will be converted into workbook
-notes above.
+The schema is at `src/sssig_rules/schema.py`
 
-Rough remaining item list:
+The script can be run vi:
 
-- Start work on pulling out the common bits from those rules in a way way that easily translates[^1].
-- Start scripting and testing the ability to use the detections effectively[^2].
-- How to provide better detections for things that can support it vs basic detections for things that might only offer basic options[^3].
-- Define vocab as we go for the parts of a pattern in the SIG's glossary (might want to split this out of the main README as it grows).
+```sh
+cd src
+make # needed to build the hyperscan dep
+./main.py -t {type} ../data/rules/sssig.toml
+```
 
-[^1]: We'll want to make sure we split out the target from the context patterns
-    because some tools have different regex scopes (e.g. Gitleak's allowlist
-    has a regexTarget) or there may be cases where we do full matches against
-    just a finding to verify it (e.g. if ML picks up a generic secret and we
-    need to classify it).
+## Results & Conclusion
 
-[^2]: Not sure if we want to start building out a training/benchmarking repo at
-    this point or test it another way. If we do want to start ping me
-    (bplaxco), I have some ideas that might help us get started.
+The final format defined in `src/sssig_rules/schema.py` looks like a promising
+start for the rule format. Further tweaks and developments can happen in
+our common rules project. This can be kept around to show the process and how
+the initial format was reached.
 
-[^3]: Some things to think about: just pattern target, extra indicators (both positive and negative), conditions (and how to translate those), etc
-
-## [Draft] Results & Conclusion
-
-(Pending Research)
+Also if we decide that the toml format is unweildly any data format that can be
+loaded into a python dict and serialized into json/yaml/toml/etc should do.

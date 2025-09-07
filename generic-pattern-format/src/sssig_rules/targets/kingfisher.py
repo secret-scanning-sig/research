@@ -222,7 +222,7 @@ def _validation(rule: Rule) -> _Validation | None:
     if analyzer.action.timeout:
         logger.warning("HTTP analyzer timeout ignored")
 
-    map_headers= lambda f, d: {k.title(): f(v) for k, v in (d or {}).items()}
+    map_headers = lambda f, d: {k.title(): f(v) for k, v in (d or {}).items()}
     validation = _Validation(
         type=_ValidationType.HTTP,
         content=_ValidationContent(
