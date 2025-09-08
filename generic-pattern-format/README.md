@@ -24,13 +24,10 @@ translation targets that I may have not considered:
 Based on the above, I've selected the following tools for my translation
 targets:
 
-- Bash + GNU Coreutils + Grep
 - GitHub Secret Protection
 - Gitleaks
 - Nosey Parker
-- Splunk
 - TruffleHog
-- YARA
 
 ### Regex Format Selection
 
@@ -66,8 +63,8 @@ looking at existing wide spread detection formats like Sigma and YARA
 for inspiration for the format.
 
 I decided to start with a format that is specific, typed, and declarative to
-make it easier to translate. I also chose TOML since it is compact, simple, and
-makes escaping more complicated strings easier with triple single quotes.
+make it easier to translate. I chose YAML since it handles block text easier
+and escaping complicated strings isn't too difficult.
 
 Also for IDs I used:
 

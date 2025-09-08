@@ -58,11 +58,7 @@ def _exclude_words(rule: Rule) -> list[str] | None:
     if not exc_filters:
         return None
 
-    words = [
-        word for f in exc_filters
-        if f.target_strings
-        for word in f.target_strings
-    ]
+    words = [word for f in exc_filters if f.target_strings for word in f.target_strings]
 
     return words or None
 

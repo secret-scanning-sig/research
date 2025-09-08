@@ -1,5 +1,6 @@
 import logging
 import re
+import json
 
 import tomlkit
 import yaml
@@ -117,3 +118,10 @@ def _dump_yaml(model: BaseModel) -> str:
 
 def _dump_toml(model: BaseModel) -> str:
     return tomlkit.dumps(model.model_dump(mode="json", exclude_none=True))
+
+
+def _dump_json(model: BaseModel) -> str:
+    return json.dumps(
+        model.model_dump(mode="json", exclude_none=True),
+        indent=2,
+    )
