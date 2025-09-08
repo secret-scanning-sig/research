@@ -1,3 +1,4 @@
+# An example of making something reusable in the patterns:
 .exclude_target_strings: &exclude_target_strings
   - "000000"
   - 6fe4476ee5a1832882e326b506d14126
@@ -1502,6 +1503,38 @@ rules:
           - >-
             X-Amz-Signature|WC1BbXotU2lnbmF0dXJl|gtQW16LVNpZ25hdHVyZ|YLUFtei1TaWduYXR1cm
 
+  - id: S3IGDPG4G2UGSQPG4SCF
+    meta:
+      kind: aws_secret_access_key
+      name: 'AWS Secret Access Key'
+      tags: ['aws', 'secret']
+      confidence: medium
+      report: true
+      references:
+        - 'https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_identifiers.html#identifiers-unique-ids'
+
+    # An example of a rule depending on another rule
+    dependencies:
+      - rule_id: S3IGDPG4G2UGSQPG4SCE
+        varname: aws_secret_access_key
+        within_lines: 4
+        within_columns: 64
+
+    target:
+      prefix_pattern: >-
+        \A|(?i)(?:aws|access).{0,16}(?:key|secret).+\W
+      pattern: >-
+        [\w\_\/]+
+      suffix_pattern: >-
+        \W|\z
+
+    filters:
+      - kind: require
+        target_min_entropy: 3.0
+
+      - kind: exclude
+        target_strings: *exclude_target_strings
+
   - id: S3IGTVE2THEZF64SBFFM
     meta:
       kind: atlassian_api_token
@@ -1668,3 +1701,56 @@ rules:
         [\w-]+
       suffix_pattern: >-
         (?i)\.s3(?:-(?:af|ap|ca|eu|me|sa|us(?:-gov)?)-(?:central|(?:north|south)(?:east|west)?)-[1-3])?\.amazonaws\.com(?:\W|\z)
+
+  - id: S3IGTAZC4EEQJF2U67DZ
+    meta:
+      kind: github_personal_access_token
+      name: 'GitHub Personal Access Token'
+
+    target:
+      prefix_pattern: >-
+        \A|\W
+      pattern: >-
+        ghp_[0-9A-Za-z]{36}
+      suffix_pattern: >-
+        \W|\z
+
+    analyzers:
+      - meta:
+          kind: http
+
+        action:
+          url: 'https://api.github.com/user'
+          method: post
+          headers:
+            accept: 'application/vnd.github.v3+json'
+            authorization: 'Bearer {{ target }}'
+
+        condition:
+          # For scanners like kingfisher, whether or not status is negative or
+          # not is determined by what makes the smallest list.
+          #
+          # This list can take [int, ...] and/or [[int, int], ...] values to
+          # represent ranges of statuses.
+          #
+          # For example if you wanted everything except 401 you could do:
+          #   [[100, 400], [402, 599]]
+          # or even
+          #   [[100, 400], 402, 403, 404, [405, 599]]
+          #
+          # Then in kingfisher it would result in this since it makes a smaler list:
+          #   status: [401]
+          #   negative: true
+          - statuses: [200]
+            body_syntax: json
+            body_strings:
+              - '"login"'
+              - '"email"'
+
+            # these are OR'd user more entries to do an AND
+          - headers:
+              server: ['github.com']
+
+          - headers:
+              x-github-api-version-selected: ['2022-11-28']
+

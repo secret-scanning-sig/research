@@ -2,108 +2,86 @@
 
 ## Goal
 
-Create a generic format that allows you to describe secret detection patterns
-in a way that can easily translate into formats used by other tools. This is
-make it easier to share patterns in a tool agnostic way.
+The goal of was to create a generic, tool-agnostic format for describing secret
+detection patterns. This allows for the easy translation of patterns into
+various formats used by different security tools, simplifying the sharing and
+maintenance of detection logic. It is not intended to replace native tool
+formats but to be compiled into them.
 
 ## Last Updated
 
-N/A - this project is newly created. We're still fleshing things out.
+2025-09-07
 
 ## Methodology
 
-### Translation Target Selection
+Inspiration was initially drawn from the [Sigma project](https://sigmahq.io/)
+for SIEMs. So the core of the solution is a structured, YAML-based format that
+can capture detection logic, including multi-part secrets, contextual keywords,
+and validation steps.
 
-I took a draft of this doc with a rough outline. I provided it to Gemini 2.5
-pro using the deep research feature to help with finding existing tools and
-translation targets that I may have not considered:
+## Implementation
 
-- [Prompt](data/gemini-deep-research/initial-research-prompt.md)
-- [Results](data/gemini-deep-research/initial-research-results.md)
+### Translation Targets
 
-Based on the above, I've selected the following tools for my translation
-targets:
+Based on an analysis of the current secret scanning ecosystem, the following
+tools were selected as example translation targets:
 
-- GitHub Secret Protection
-- Gitleaks
-- Nosey Parker
-- TruffleHog
+* GitHub Secret Protection
+* Gitleaks
+* Nosey Parker
+* Kingfisher
+* TruffleHog
 
-### Regex Format Selection
+### Schema Definition
 
-I decided to use a regular expression format consisting of a common subset of
-PCRE's features found in these libraries since that should result in very
-portable patterns:
+The pattern schema is defined using Python Pydantic models to ensure it is
+well-defined, easy to parse, and simple to validate.
 
-- github.com/golang/go/tree/master/src/regexp
-- github.com/intel/hyperscan
-- github.com/python/cpython/tree/main/Lib/re
-- github.com/rust-lang/regex
+The schema can be viewed here: [src/sssig\_rules/schema.py](src/sssig_rules/schema.py)
 
-[Hyperscan's pattern support docs](https://intel.github.io/hyperscan/dev-reference/compilation.html#pattern-support)
-acted as a list of features to look for in the other libraries since it seemed
-to be the most restrictive of the PCRE implementations.
+### Example Usage
 
-Current recommendations on character escapes:
+The reference implementation includes a script to demonstrate the translation
+process.
 
-- Escape single quotes, double quotes, and backticks.
-- Escape all metacharacters not being used as metacharacters, even when a
-  regex engine wouldn't interpret them as a metacharacter.
+1.  **Build Hyperscan dependency:**
+    ```sh
+    cd src
+    make
+    ```
 
-It makes it easier to copy/paste them into a SIEM or a terminal without needing
-to make small changes to the patterns which could cause issues and makes them
-more difficult to use. The translator should handle these cases, but being able
-to easily do it by hand without changing them makes them easier to maintain and
-use for hunting.
+2.  **Run the translation script:**
+    ```sh
+    ./main.py -t {gitleaks|noseyparker|etc} ../data/rules/sssig.yaml
+    ```
 
-### Pattern Format Selection
+### Example Translations
 
-After selecting the targets and process for picking a regex formats, I began
-looking at existing wide spread detection formats like Sigma and YARA
-for inspiration for the format.
-
-I decided to start with a format that is specific, typed, and declarative to
-make it easier to translate. I chose YAML since it handles block text easier
-and escaping complicated strings isn't too difficult.
-
-Also for IDs I used:
+The other files in [data/rules](data/rules) were compiled via:
 
 ```sh
-echo "S3IG$(openssl rand 10 | basenc --base32)"
-```
-
-I defined the schema using models to make it easier to parse, test and
-validate.
-
-You can view it here: [src/sssig\_rules/schema.py](src/sssig_rules/schema.py)
-
-### Initial Rule Selection
-
-I selected a few rules for Gitleaks, Nosey Parker, and YARA that:
-
-- Leverage most of the tool's features or have complex logic
-- Are large and potentially unwieldy to write
-
-They can be found under `data/rules/{gitleaks.toml,noseyparker.yaml,yara.yar}`.
-
-The converted format can be found at `data/rules/sssig.toml`
-
-The schema is at `src/sssig_rules/schema.py`
-
-The script can be run vi:
-
-```sh
-cd src
-make # needed to build the hyperscan dep
-./main.py -t {type} ../data/rules/sssig.toml
+cd src && make
+./main.py -t noseyparker ../data/rules/sssig.yaml > ../data/rules/noseyparker.yaml
+./main.py -t gitleaks    ../data/rules/sssig.yaml > ../data/rules/gitleaks.toml
+./main.py -t kingfisher  ../data/rules/sssig.yaml > ../data/rules/kingfisher.yaml
+./main.py -t github      ../data/rules/sssig.yaml > ../data/rules/github.json
+./main.py -t trufflehog  ../data/rules/sssig.yaml > ../data/rules/trufflehog.yaml
 ```
 
 ## Results & Conclusion
 
-The final format defined in `src/sssig_rules/schema.py` looks like a promising
-start for the rule format. Further tweaks and developments can happen in
-our common rules project. This can be kept around to show the process and how
-the initial format was reached.
+The final format defined in `src/sssig_rules/schema.py` provides a starting
+point for a common secret detection rule format. Future development can take
+place in the rules repo as we add more targets and improve the format.
 
-Also if we decide that the toml format is unweildly any data format that can be
-loaded into a python dict and serialized into json/yaml/toml/etc should do.
+### Key Features of the Format
+
+* **Structured & Typed:** The format is declarative and typed, making it easy
+  to parse, validate, and translate.
+* **Expressive Detection Logic:** It can represent not just regexes, but also:
+  * Multi-part secrets (e.g., `client_id` and `client_secret`).
+  * Contextual keywords and surrounding patterns.
+  * Entropy checks.
+  * Active validation steps.
+* **Metadata:** Includes fields for rule ID, name, description, severity,
+  confidence, and references, providing context for analysts.
