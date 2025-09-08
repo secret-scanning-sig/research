@@ -115,7 +115,7 @@ rules:
       pattern: >-
         v1\.0-[a-f0-9]{24}-[a-f0-9]{146}
       suffix_pattern: >-
-        [\x60\'\"\s;]|\\[nr]|$|"
+        [\x60\'\"\s;]|\\[nr]|$
 
     filters:
       - kind: require
@@ -254,7 +254,6 @@ rules:
       kind: aws_s3_bucket
       name: 'AWS S3 Bucket'
       tags: ['api', 'identifier']
-
       references:
         - 'https://docs.aws.amazon.com/general/latest/gr/rande.html'
 
