@@ -1,7 +1,7 @@
 #!.venv/bin/python3
 import logging
 import sys
-import tomllib
+import yaml
 
 from argparse import ArgumentParser
 from argparse import Namespace
@@ -29,10 +29,10 @@ def _translate(opts):
 
 
 def _load_rules(rulespath: Path) -> list[Rule]:
-    with rulespath.open("rb") as rulesfile:
+    with rulespath.open("r") as rulesfile:
         return [
             Rule.model_validate(rule_data)
-            for rule_data in tomllib.load(rulesfile)["rules"]
+            for rule_data in yaml.safe_load(rulesfile)["rules"]
         ]
 
 
